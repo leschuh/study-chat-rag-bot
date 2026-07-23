@@ -10,11 +10,6 @@ services:
     volumes:
       - qdrant_storage:/qdrant/storage
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:6333 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
 
   studychat:
     build:
@@ -28,8 +23,7 @@ services:
     environment:
       - QDRANT_HOST=qdrant
     depends_on:
-      qdrant:
-        condition: service_healthy
+      - qdrant
     restart: unless-stopped
 
 volumes:
