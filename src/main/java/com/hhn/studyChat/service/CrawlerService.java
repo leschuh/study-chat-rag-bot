@@ -7,7 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -41,7 +43,8 @@ public class CrawlerService {
     private RAGService ragService;
 
     // Setter für RAGService (vermeidet zirkuläre Abhängigkeit)
-    public void setRagService(RAGService ragService) {
+    @Autowired
+    public void setRagService(@Lazy RAGService ragService) {
         this.ragService = ragService;
     }
 

@@ -80,6 +80,8 @@ public class RAGService {
     // In-Memory-Cache für RAG-Dokumente nach jobId
     private final Map<String, List<RAGDocument>> documentCache = new ConcurrentHashMap<>();
 
+    private boolean isLlmAvailable = false;
+
     // Modelle und Stores für Langchain4j
     private EmbeddingModel embeddingModel;
     private ChatLanguageModel chatModel;
@@ -104,7 +106,6 @@ public class RAGService {
     public void init() {
         logger.info("=== INITIALISIERE RAG-SERVICE MIT LOKALER OPEN WEBUI ===");
 
-        // === LOKALES LLM ÜBER OPEN WEBUI KONFIGURIEREN ===
         String protocol = openWebUISSL ? "https" : "http";
         String openWebUIBaseUrl = String.format("%s://%s:%d/api", protocol, openWebUIHost, openWebUIPort);
         logger.info("Open WebUI Base URL: {}", openWebUIBaseUrl);
@@ -112,43 +113,35 @@ public class RAGService {
         logger.info("SSL aktiviert: {}", openWebUISSL);
 
         try {
-            // OpenAI-kompatible API über Open WebUI
             var chatModelBuilder = OpenAiChatModel.builder()
                     .baseUrl(openWebUIBaseUrl)
                     .modelName(openWebUIModel)
                     .temperature(0.7);
 
-            // API Key konfigurieren und validieren
             if (openWebUIApiKey != null && !openWebUIApiKey.trim().isEmpty() &&
                     !openWebUIApiKey.equals("sk-YOUR-GENERATED-API-KEY-HERE")) {
                 chatModelBuilder.apiKey(openWebUIApiKey);
                 logger.info("✓ API Key für Open WebUI konfiguriert");
             } else {
-                logger.error("❌ FEHLER: Gültiger API Key erforderlich!");
-                logger.error("1. Öffnen Sie: {}", openWebUIBaseUrl.replace("/api", ""));
-                logger.error("2. Anmelden und zu Settings → Account gehen");
-                logger.error("3. API Key generieren");
-                logger.error("4. In application.properties eintragen: openwebui.api.key=sk-...");
-                throw new RuntimeException("API Key erforderlich für Open WebUI");
+                logger.warn("⚠️ Kein gültiger API Key konfiguriert. LLM läuft im Offline-Modus.");
             }
 
             chatModel = chatModelBuilder.build();
             logger.info("✓ Open WebUI Chat Model erfolgreich konfiguriert");
 
-            // Test der Verbindung
             testOpenWebUIConnection();
+            isLlmAvailable = true;
+            logger.info("✓ LLM-Verbindungstest erfolgreich.");
 
         } catch (Exception e) {
-            logger.error("❌ Fehler bei der Open WebUI Konfiguration: {}", e.getMessage());
-            throw new RuntimeException("Kann Open WebUI nicht erreichen", e);
+            logger.warn("⚠️ Fehler bei LLM-Verbindung (Offline-Modus aktiv): {}", e.getMessage());
+            isLlmAvailable = false;
         }
 
-        // === EMBEDDING MODEL INITIALISIEREN ===
         logger.info("Initialisiere lokales Embedding-Modell...");
         embeddingModel = new AllMiniLmL6V2EmbeddingModel();
         logger.info("✓ Embedding-Modell erfolgreich geladen");
 
-        // === QDRANT CLIENT INITIALISIEREN ===
         if (!useInMemoryStore) {
             try {
                 logger.info("Initialisiere Qdrant Client...");
@@ -162,7 +155,6 @@ public class RAGService {
             }
         }
 
-        // === RAG-SYSTEM FÜR EXISTIERENDE JOBS INITIALISIEREN ===
         logger.info("Initialisiere RAG-System für alle abgeschlossenen Jobs...");
         List<CrawlJob> completedJobs = crawlerService.getCompletedJobs();
         for (CrawlJob job : completedJobs) {
@@ -194,8 +186,12 @@ public class RAGService {
      * Generiert eine Antwort vom lokalen LLM basierend auf der Anfrage und dem Kontext
      */
     public String generateResponse(String query, String context) {
+        if (!isLlmAvailable) {
+            logger.warn("LLM nicht erreichbar. Generiere Antwort im Offline-Vorschaumodus.");
+            return "[Offline-Modus] Die KI der Hochschule Heilbronn ist aktuell nicht erreichbar.\n\n" +
+                   "Hier ist der abgerufene Kontext aus den Dokumenten:\n" + context;
+        }
         try {
-            // Optimierter Prompt für deutsche Hochschul-Inhalte
             String prompt = String.format(
                     "Du bist ein hilfsreicher Assistent für Studierende der Hochschule Heilbronn. " +
                             "Beantworte die folgende Frage basierend auf den bereitgestellten Informationen aus den Webseiten der Hochschule.\n\n" +
@@ -212,16 +208,12 @@ public class RAGService {
             );
 
             logger.info("Generiere Antwort für Anfrage: '{}'", query);
-            logger.debug("Verwendeter Prompt: {}", prompt);
-
             String response = chatModel.generate(prompt);
             logger.info("✓ Antwort vom lokalen LLM erhalten");
             return response;
-
         } catch (Exception e) {
             logger.error("❌ Fehler bei der Generierung der Antwort: {}", e.getMessage());
-            return "Entschuldigung, es gab einen Fehler beim Verarbeiten deiner Anfrage. " +
-                    "Bitte überprüfe, ob die Open WebUI erreichbar ist und versuche es später erneut.";
+            return "Entschuldigung, es gab einen Fehler beim Verarbeiten deiner Anfrage: " + e.getMessage();
         }
     }
 
