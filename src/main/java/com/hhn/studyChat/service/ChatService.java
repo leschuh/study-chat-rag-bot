@@ -66,7 +66,7 @@ public class ChatService {
             context.append("Dokument ").append(i + 1).append(": ");
             context.append(doc.getTitle()).append("\n");
             context.append("URL: ").append(doc.getUrl()).append("\n");
-            context.append("Inhalt: ").append(doc.getContent().substring(0, Math.min(doc.getContent().length(), 500))).append("...\n\n");
+            context.append("Inhalt: ").append(doc.getContent()).append("\n\n");
         }
 
         return context.toString();

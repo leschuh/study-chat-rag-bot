@@ -374,24 +374,23 @@ public class RAGService {
             // Ähnliche Dokumente finden
             List<EmbeddingMatch<TextSegment>> matches = embeddingStore.findRelevant(queryEmbedding, maxResults);
 
-            // RAG-Dokumente aus dem Cache abrufen
-            List<RAGDocument> documents = documentCache.getOrDefault(jobId, new ArrayList<>());
-
-            // Relevante Dokumente anhand der URLs finden
             List<RAGDocument> relevantDocs = new ArrayList<>();
             for (EmbeddingMatch<TextSegment> match : matches) {
                 TextSegment segment = match.embedded();
                 String url = segment.metadata().get("url");
+                String title = segment.metadata().get("title");
+                String category = segment.metadata().get("category");
 
-                // Passendes Dokument im Cache finden
-                for (RAGDocument doc : documents) {
-                    if (doc.getUrl().equals(url)) {
-                        if (!relevantDocs.contains(doc)) {
-                            relevantDocs.add(doc);
-                        }
-                        break;
-                    }
-                }
+                // Create temporary document containing only this specific matched chunk
+                RAGDocument doc = RAGDocument.create(
+                        jobId,
+                        url,
+                        title,
+                        segment.text(), // exact segment match content
+                        category,
+                        ""
+                );
+                relevantDocs.add(doc);
             }
 
             return relevantDocs;
