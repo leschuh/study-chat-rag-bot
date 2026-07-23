@@ -2,55 +2,63 @@
 
 A full-stack, AI-powered Chatbot system (`studyChat`) designed for university students to query course regulations, class schedules, and university information. The project features a distributed web crawler that gathers information directly from university websites (e.g., Heilbronn University / HHN) and feeds it into a **Retrieval-Augmented Generation (RAG)** pipeline.
 
-## System Architecture & Flow
+## 🌟 Highlights
+- **Modern UI:** Glassmorphic dark-mode interface built with custom CSS variables and WebKit optimisations.
+- **Resilient AI Fallback:** Soft-fail mechanisms for LLM downtime, falling back to local/in-memory contexts automatically.
+- **Crawler Architecture:** Uses Apache Storm to safely and efficiently crawl large amounts of documents.
+
+## 🏗 System Architecture & Flow
 
 1. **Distributed Crawling:** A custom **Apache Storm** topology crawls targeted web domains. Text content is extracted, cleaned, and structured.
 2. **JSON Export & RAG Indexing:** Crawled resources are written to structured JSON documents. These documents are processed by **LangChain4j**, which generates text embeddings locally (`all-minilm-l6-v2`) and indexes them for vector search.
 3. **Conversational Interface:** A **Spring Boot** web server hosts an interactive chat client. When a student asks a question, the system retrieves semantically relevant information from the vector store and uses an LLM to generate context-aware, factual responses.
 
-## Key Features
-
-* **Real-Time Web Crawler (Apache Storm & Storm Crawler):**
-  * Configured via `CrawlTopology.java`.
-  * Custom Storm Bolts:
-    * `HHNStructuredDataBolt.java`: Custom HTML parser that extracts structured university data.
-    * `DepthControlBolt.java`: Prevents crawler runaway by controlling traversal depth.
-    * `URLExtractorBolt.java`: Parses and filters URLs for queueing.
-    * `RAGJSONFileWriterBolt.java`: Serializes crawled pages into RAG-compliant JSON files.
-* **Semantic Search & RAG (LangChain4j):**
-  * Local embedding generation using the `all-minilm-l6-v2` model.
-  * Contextual query matching using vector distance.
-  * Prompt templates to limit LLM hallucinations by forcing responses to be grounded in retrieved document context (`RAGService.java`).
-* **Interactive Web Server (Spring Boot):**
-  * Live chat system powered by **Spring WebSockets**.
-  * Admin dashboard to trigger, monitor, and configure crawl jobs (`CrawlerController.java`).
-  * Responsive Thymeleaf UI templates.
-
-## Technology Stack
-
-* **Language:** Java 17
-* **Web Framework:** Spring Boot 3.4.5 (Web, WebSockets, Thymeleaf, Log4j2)
-* **Distributed Processing:** Apache Storm 2.4.0
-* **Web Scraping:** Storm Crawler 2.4 & JSoup 1.16.1
-* **AI & LLM Integration:** LangChain4j 0.27.1
-
-## Getting Started
+## 🚀 Getting Started (For HHN Students / With Open WebUI)
 
 ### Prerequisites
-
-* Java 17 JDK
+* Java 17+ JDK
 * Maven 3.x
-* An LLM API token (configured in `AppConfig.java` / environment variables)
+* An active VPN connection to the HHN network (or Eduroam).
+* Docker (for the Qdrant Vector Database).
 
-### Running the Application
+### 1. Start Qdrant (Vector Database)
+The system uses Qdrant to store and search the vector embeddings. Start it via Docker:
+```bash
+docker run -p 6333:6333 -p 6334:6334 -v qdrant_storage:/qdrant/storage:z qdrant/qdrant
+```
 
-1. Clone this repository.
-2. Build the Maven project:
-   ```bash
-   mvn clean install
+### 2. Configure API Key
+1. Go to `https://inference.it.hs-heilbronn.de` and log in.
+2. Go to **Settings -> Account** and generate an API key.
+3. Open `src/main/resources/application.properties` and replace your API key:
+   ```properties
+   openwebui.api.key=sk-YOUR_API_KEY
    ```
-3. Run the Spring Boot application:
-   ```bash
-   mvn spring-boot:run
+
+### 3. Build & Run
+```bash
+.\mvnw.cmd clean install
+.\mvnw.cmd spring-boot:run
+```
+Access the web interface at `http://localhost:8080`.
+
+## 🛠️ Testing without HHN Access (Offline / Local Mode)
+
+If you do not have access to the HHN Open WebUI, you can still test the application locally!
+
+1. Open `src/main/resources/application.properties`.
+2. Disable the Qdrant requirement and use the in-memory fallback (no Docker needed!):
+   ```properties
+   use.inmemory.store=true
    ```
-4. Access the web interface at `http://localhost:8080`.
+3. Run the application (`.\mvnw.cmd spring-boot:run`).
+4. The system will detect that the LLM is unreachable and will automatically activate **Offline Mode**. You can use the web interface to crawl a test website, and the system will preview the exact context segments it *would* have sent to the AI.
+
+## 🛠 Technology Stack
+
+* **Language:** Java 17
+* **Web Framework:** Spring Boot (Web, WebSockets, Thymeleaf)
+* **Distributed Processing:** Apache Storm 
+* **Web Scraping:** Storm Crawler & JSoup
+* **AI & LLM Integration:** LangChain4j
+* **Database:** Qdrant (Vector DB)

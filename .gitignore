@@ -35,3 +35,20 @@ build/
 ### Logs ###
 logs/
 *.log
+
+### Local Crawl Data ###
+collected-content/
+test-crawl-output/
+
+### AI Assistant & Brainstorming specs ###
+docs/superpowers/
+.gemini/
+.antigravity/
+.superpowers/
+diff*.txt
+task.md
+
+### Local Configs & Env ###
+.env
+*.local
+crawler-config.properties
