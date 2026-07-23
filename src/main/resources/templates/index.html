@@ -41,7 +41,11 @@
         }
 
         /* Glassmorphism Classes */
-        .glass-panel {
+        .glass-panel,
+        .job-card,
+        .crawler-form,
+        .job-list,
+        .app-header {
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -51,11 +55,6 @@
         }
 
         .job-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
             box-shadow: 0 4px 16px rgba(0,0,0,0.2);
             margin-bottom: 20px;
             transition: all 0.3s ease;
@@ -76,31 +75,13 @@
         .status-completed { color: #5cb85c; }
         .status-failed { color: #d9534f; }
 
-        .crawler-form {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
+        .crawler-form,
+        .job-list,
+        .app-header {
             padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        }
-
-        .job-list {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
 
         .app-header {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
             margin-bottom: 20px;
         }
 
