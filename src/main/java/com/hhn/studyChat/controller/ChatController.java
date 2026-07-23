@@ -81,7 +81,7 @@ public class ChatController {
     // Optional: Endpunkt zum Abrufen des Chat-Verlaufs
     @GetMapping("/api/chat/history/{jobId}")
     @ResponseBody
-    public ResponseEntity<Object> getChatHistory(@PathVariable String jobId) {
+    public ResponseEntity<Object> getChatHistory(@PathVariable("jobId") String jobId) {
         return ResponseEntity.ok(chatService.getChatHistoryForJob(jobId));
     }
 }

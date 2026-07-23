@@ -58,14 +58,14 @@ public class CrawlerController {
 
     // API zum Starten eines Jobs
     @PostMapping("/api/jobs/{jobId}/start")
-    public ResponseEntity<CrawlJob> startJob(@PathVariable String jobId) {
+    public ResponseEntity<CrawlJob> startJob(@PathVariable("jobId") String jobId) {
         crawlerService.startJob(jobId);
         return ResponseEntity.ok(crawlerService.getJob(jobId));
     }
 
     // API zum Abrufen des Job-Status
     @GetMapping("/api/jobs/{jobId}")
-    public ResponseEntity<CrawlJob> getJob(@PathVariable String jobId) {
+    public ResponseEntity<CrawlJob> getJob(@PathVariable("jobId") String jobId) {
         CrawlJob job = crawlerService.getJob(jobId);
         if (job == null) {
             return ResponseEntity.notFound().build();
